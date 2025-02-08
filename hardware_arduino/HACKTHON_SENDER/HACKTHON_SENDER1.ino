@@ -13,15 +13,15 @@ int echo_pin1=3;//FIRST ULTARSONIC
 int trig_pin2=4;//SECOND ULTRASONIC
 int echo_pin2=5;//SECOND ULTRASONIC
 int infrared=6;
-int flame=;
-int water=;
+int flame=;//ANALOG PIN 
+int water=;//digital PIN
 int tilt_value=;
 
 
 //EXTRA VARIABLES
 int motor_read=0;
 long time1,time2;//1 FOR FIRST AND 2 FOR SECOND RESPECTIVELY ULTRASONIC SENSOR
-float distance1,distance2;
+float distance1,distance2,water_read,flame_read,tilt_read;
 
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(1);
@@ -33,7 +33,7 @@ void setup() {
   pinMode(echo_pin2,INPUT);//ULTRASONIC SENSOR
 
   pinMode(infrared,INPUT);//INFRARED SENSOR
-
+  pinMode(water,INPUT);
  
   Wire.begin(SLAVE_ADDR);
   Wire.onRequest(motor_reading);
@@ -75,6 +75,33 @@ void Value_for_sensors(){
   }
   else {
     motor_read=1;
+  }
+  // WATER SENSOR
+  water_read=digitalRead(water);
+  if(water == 1){
+    motor_read=0;
+  }
+  else{
+    motor_read=1;
+  }
+
+  //flame sensor
+  flame_read=analogRead(flame);
+  if (flame_read<=50){
+    serial.println("Flames detected");
+    motor_read=0;
+  }
+  else {
+  motor_read=1;
+  }
+
+  //TILT SENSOR
+  tilt_read=analogRead(tilt);
+  if(tilt_read>=1000){
+    motor_read=0;
+  }
+  else {
+  motor_read=1;
   }
 
 }
