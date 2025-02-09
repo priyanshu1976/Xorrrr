@@ -1,9 +1,10 @@
 #include <Wire.h>
 #include <SPI.h>
-#include <LoRa.h>
+//#include <LoRa.h>
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 
+#define SLAVE_ADDR 9
 #define RXPin 1   // GPS RX (Connect to GPS TX)
 #define TXPin 0  // GPS TX (Connect to GPS RX)
 #define GPSBaud 9600
@@ -23,13 +24,15 @@
 #define TILT 13//tilt
 
 // VARIABLES
-int motor_state = 0;
+int motor_state = 1;
 long time1, time2;
 float distance1, distance2, water_read, flame_read, tilt_read;
 TinyGPSPlus gps;
 SoftwareSerial gpsSerial(RXPin, TXPin);  // GPS Serial
 
 void setup() {
+  Wire.begin();
+
     Serial.begin(9600);
     gpsSerial.begin(GPSBaud);
 
@@ -72,65 +75,45 @@ void readSensors() {
     distance2 = (time2 * 0.0344) / 2;
 
     // SAFETY CHECKS
-    if (distance1 <= 30 || distance2 <= 30){
+    /*if (distance1 <= 10 || distance2 <= 10){
       motor_state = 0;
+      Serial.println("RADD is not running");
     }
     else{
        motor_state = 1;
+       Serial.println("RADD is runinng");
     }
 
     if (digitalRead(INFRARED) == HIGH){//infrared
-       motor_state = 0;
+      Serial.println("RADD is not running");
     }
     if (digitalRead(WATER) == 1) {//water
-      motor_state = 0;
+      Serial.println("RADD is not running");
     } 
     flame_read = analogRead(FLAME);
     if (flame_read <= 50) {
         Serial.println("Flames detected!");
-        motor_state = 0;
+        Serial.println("RADD is not running");
     }
 
     tilt_read = digitalRead(TILT);
     if (tilt_read == HIGH) {
         Serial.println("Tilt detected!");
         motor_state = 0;
-    }
+    }*/
 }
 
-void sendLoRaData() {
-    String dataPacket = "";
-
-    // GPS DATA
-    if (gpsSerial.available()) {
-        char c = gpsSerial.read();
-        gps.encode(c);
-    }
-    if (gps.location.isValid()) {
-        dataPacket += "LAT:" + String(gps.location.lat(), 6);
-        dataPacket += ", LNG:" + String(gps.location.lng(), 6);
-    } else {
-        dataPacket += "LAT:N/A, LNG:N/A";
-    }
-
-    // SENSOR DATA
-    dataPacket += ", D1:" + String(distance1);
-    dataPacket += ", D2:" + String(distance2);
-    dataPacket += ", FLM:" + String(flame_read);
-    dataPacket += ", TILT:" + String(tilt_read);
-    dataPacket += ", MOTOR:" + String(motor_state);
-
-    Serial.println("Sending: " + dataPacket);
-    LoRa.beginPacket();
-    LoRa.print(dataPacket);
-    LoRa.endPacket();
+void sendMotorState() {
+    Wire.beginTransmission(SLAVE_ADDR);
+    Wire.write(motor_state);
+    Wire.endTransmission();
 }
 
 void loop() {
-    readSensors();
-    sendLoRaData();
-    delay(2000);
+    /*readSensors();
+    sendLoRaData();*/
+   Serial.print("Motor State: ");
+    Serial.println(motor_state);
+    //delay(2000);
 }
-
-
 
